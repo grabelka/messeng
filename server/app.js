@@ -24,5 +24,7 @@ wss.on('connection', function connection(ws) {
 function broadcastMessage(message, id) {
   wss.clients.forEach(client => {
     client.send(JSON.stringify(message))
+    if (client.id == id) {
+    }
   })
 }
