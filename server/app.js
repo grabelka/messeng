@@ -4,6 +4,7 @@ const wss = new ws.Server({
   port: 5000,
 }, () => console.log(`Server started on 5000`))
 
+let rooms = {}
 
 wss.on('connection', function connection(ws) {
   ws.id = Date.now()
@@ -12,19 +13,34 @@ wss.on('connection', function connection(ws) {
   message = JSON.parse(message)
   switch (message.event) {
     case 'message':
-      broadcastMessage(message, id)
+      broadcastMessage(message)
       break;
     case 'connection':
-      broadcastMessage(message, id)
+      join(message.room, id)
+      broadcastMessage(message)
+      break;
+    case 'disconnection':
+      console.log('disconnection')
+      rooms[message.room].filter(i => i==id)
+      broadcastMessage(message)
       break;
     }
   })
 })
 
-function broadcastMessage(message, id) {
+function join(name, id) {
+  if (!rooms[name]) {
+    rooms[name] = []
+  }
+
+  rooms[name].push(id)
+}
+
+function broadcastMessage(message) {
   wss.clients.forEach(client => {
-    client.send(JSON.stringify(message))
-    if (client.id == id) {
+    console.log(rooms)
+    if (rooms[message.room].includes(client.id)) {
+      client.send(JSON.stringify(message))
     }
   })
 }
